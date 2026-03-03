@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
-import { Bell, Headphones, Mic, Search, Settings } from 'lucide-react';
+import { Bell, Headphones, Link2, Mic, Search, Settings } from 'lucide-react';
 import { api } from '../lib/api';
 import { AuthPanel } from '../components/AuthPanel';
 
@@ -21,6 +21,7 @@ export function App() {
   const [activeChannel, setActiveChannel] = useState();
   const [typing, setTyping] = useState('');
   const [draft, setDraft] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
 
   const socket = useMemo(() => io('http://localhost:4000', { auth: { userId: user?.id }, autoConnect: !!user }), [user?.id]);
 
@@ -39,6 +40,7 @@ export function App() {
       const { data } = await api.get(`/api/servers/${activeServer.id}/channels`);
       setChannels(data);
       setActiveChannel(data[0]);
+      setInviteLink('');
     })();
   }, [activeServer]);
 
@@ -69,6 +71,13 @@ export function App() {
     await api.post(`/api/messages/${messageId}/reactions`, { emoji });
   }
 
+  async function createInviteLink() {
+    if (!activeServer) return;
+    const { data } = await api.post(`/api/servers/${activeServer.id}/invites`, { expiresInHours: 24 });
+    setInviteLink(data.link);
+    await navigator.clipboard?.writeText(data.link).catch(() => {});
+  }
+
   if (!user) return <div className="min-h-screen grid place-items-center bg-gradient-to-b from-slate-950 to-slate-800"><AuthPanel onAuthed={setUser} /></div>;
 
   return (
@@ -78,6 +87,8 @@ export function App() {
       </aside>
       <aside className="w-64 bg-[#2b2d31] p-4 border-r border-black/20">
         <h2 className="font-semibold mb-2">{activeServer?.name}</h2>
+        <button onClick={createInviteLink} className="w-full mb-3 text-left bg-indigo-500/90 hover:bg-indigo-500 rounded-lg p-2 text-sm inline-flex items-center gap-2"><Link2 size={16} /> Create Invite Link</button>
+        {inviteLink && <p className="text-xs break-all text-slate-300 mb-3">Invite: <a href={inviteLink} className="text-indigo-300 underline">{inviteLink}</a></p>}
         {channels.map((c) => (
           <button key={c.id} onClick={() => setActiveChannel(c)} className="w-full text-left hover:bg-white/10 p-2 rounded-lg">{c.type === 'voice' ? '🔊' : '#'} {c.name}</button>
         ))}

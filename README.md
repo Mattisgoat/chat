@@ -4,6 +4,7 @@ ChatForge is a full-stack Discord-inspired platform with:
 - Authentication + profile settings
 - Server/channel management
 - Real-time text chat + typing indicator + emoji reactions
+- Server invite link generation (shareable URL)
 - Role-permission model + admin moderation endpoint
 - Friend request graph
 - Voice-presence socket events (join/mute/deafen/speaking state)
@@ -91,6 +92,7 @@ Both seeded users use password: `password123`
 - Messaging: send/fetch, mention booleans, reaction counts, typing indicator
 - Roles/Permissions: owner/admin/mod/member modeled via `roles` + `role_permissions`
 - Admin commands foundation: moderation endpoint (`/api/admin/ban`) checks permissions
+- Invite links: `/api/servers/:serverId/invites` returns shareable website invite links
 - Notifications/unread/search/themes/settings: designed as extension points in current UI architecture
 
 ## Notes

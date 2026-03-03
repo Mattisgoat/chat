@@ -86,6 +86,31 @@ app.get('/api/servers/:serverId/channels', authMiddleware, async (req, res) => {
   res.json(rows.rows);
 });
 
+app.post('/api/servers/:serverId/invites', authMiddleware, async (req, res) => {
+  const code = Math.random().toString(36).slice(2, 10);
+  const expiresInHours = Number(req.body?.expiresInHours || 24);
+  const expiresAt = new Date(Date.now() + expiresInHours * 60 * 60 * 1000);
+  const created = await query(
+    'INSERT INTO invites (server_id, code, expires_at, created_by) VALUES ($1,$2,$3,$4) RETURNING *',
+    [req.params.serverId, code, expiresAt, req.user.id]
+  );
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+  res.status(201).json({
+    invite: created.rows[0],
+    link: `${clientUrl}/invite/${code}`
+  });
+});
+
+app.get('/api/invites/:code', authMiddleware, async (req, res) => {
+  const invite = await query('SELECT * FROM invites WHERE code = $1', [req.params.code]);
+  if (!invite.rows[0]) return res.status(404).json({ error: 'Invite not found' });
+  if (invite.rows[0].expires_at && new Date(invite.rows[0].expires_at) < new Date()) {
+    return res.status(410).json({ error: 'Invite expired' });
+  }
+  const serverResult = await query('SELECT id, name, description, icon_url FROM servers WHERE id = $1', [invite.rows[0].server_id]);
+  res.json({ invite: invite.rows[0], server: serverResult.rows[0] });
+});
+
 app.get('/api/channels/:channelId/messages', authMiddleware, async (req, res) => {
   const rows = await query(
     `SELECT m.*, u.username, u.display_name, u.avatar_url
