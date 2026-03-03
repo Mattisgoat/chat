@@ -1,0 +1,13 @@
+{
+  "name": "chatforge-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": ["server", "client"],
+  "scripts": {
+    "dev": "concurrently \"npm --workspace server run dev\" \"npm --workspace client run dev\"",
+    "build": "npm --workspace server run build && npm --workspace client run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
